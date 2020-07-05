@@ -1,7 +1,10 @@
 import streamlit as st
 import pandas as pd
+import gspread_pandas as gpd
 # from gspread_pandas import Spread
 # s=Spread('me','Questions2019B')
+import xlrd
+
 
 @st.cache
 def get_subj(labs):
@@ -23,22 +26,22 @@ radioDict={
 }
 
 
-
-
-sheetId='16l-wvB6zJz9GdxussYA3dYL4Ovb7-M1xYayXzoR_j_k'
-url='https://docs.google.com/spreadsheets/d/{sheetId}/export?format=csv'
 Url='https://docs.google.com/spreadsheets/d/16l-wvB6zJz9GdxussYA3dYL4Ovb7-M1xYayXzoR_j_k/export?format=csv'
-df=pd.read_csv(Url,encoding='utf-8',skiprows=14)
-labs=df[['מעבדה']].drop_duplicates()
+shelot=pd.read_csv(Url,encoding='utf-8',skiprows=14)
+projects=pd.read_excel('marks2020B.xlsx')
+options=projects['שם_פרויקט'].drop_duplicates().tolist()
+project = st.sidebar.selectbox('Choose project from  list', options)
+# st.table(projects)
+students=projects[(projects['שם_פרויקט']==project)]['סטודנטים']
+labs=shelot[['מעבדה']].drop_duplicates()
 mode=st.sidebar.radio( 'בחר צורת הפעלה' ,(1,2),format_func=radioDict.get)
 history=get_history()
 if mode==1:
-    # nose=get_subj(labs)
-    # st.info(nose)
+    student=st.sidebar.selectbox('בחר סטודנט' ,students.tolist())
     koshi=st.sidebar.radio('קושי', (1,2,3))
     sbject=st.sidebar.selectbox( 'בחר נושא' ,labs.values.tolist())
-    if sbject[0]!='nan':
-        tmp=df[(df['רמת_קושי']==koshi) & (df['מעבדה']==sbject[0]) & (df['was_asked']==0)].sample(n=1)
+    if st.sidebar.button('שאל'):
+        tmp=shelot[(shelot['רמת_קושי']==koshi) & (shelot['מעבדה']==sbject[0]) & (shelot['was_asked']==0)].sample(n=1)
         history.append(tmp.index+16)
         st.table(tmp[['שאלה']])
         st.table(tmp[['תשובה']])
@@ -50,7 +53,7 @@ else:
     st.write('רמת קושי' ,koshiIndx)
     lab=labs.values.tolist()[labIndx][0]
     st.write(lab)
-    tmp = df[(df['רמת_קושי'] == koshiIndx) & (df['מעבדה'] == lab) & (df['was_asked'] == 0)].sample(n=1)
+    tmp = shelot[(shelot['רמת_קושי'] == koshiIndx) & (shelot['מעבדה'] == lab) & (shelot['was_asked'] == 0)].sample(n=1)
     history.append(tmp.index+16)
     st.table(tmp[['שאלה']])
     st.table(tmp[['תשובה']])
